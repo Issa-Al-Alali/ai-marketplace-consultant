@@ -5,12 +5,21 @@ Use this for large-scale vendor analysis without browser limitations
 
 import argparse
 import json
+import sys
+import os
 from tqdm import tqdm
 import pandas as pd
 from data_engine import load_and_preprocess_data, get_vendor_summary
 from agent import MarketplaceAgent
 from benchmark import BenchmarkEvaluator
 from config import GOOGLE_API_KEY
+
+# Fix Windows console encoding for emojis
+if sys.platform == 'win32':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except:
+        pass
 
 def main():
     parser = argparse.ArgumentParser(description='Marketplace Vendor Analysis CLI')
@@ -25,11 +34,11 @@ def main():
     args = parser.parse_args()
     
     # Initialize
-    print("🚀 Initializing Marketplace AI Agent...")
+    print("[*] Initializing Marketplace AI Agent...")
     agent = MarketplaceAgent(GOOGLE_API_KEY)
     
     if args.mode == 'single':
-        print(f"📊 Analyzing vendor: {args.vendor_id}")
+        print(f"[*] Analyzing vendor: {args.vendor_id}")
         df = load_and_preprocess_data()
         vendor_data = get_vendor_summary(df, args.vendor_id)
         
@@ -42,10 +51,10 @@ def main():
         with open(args.output, 'w') as f:
             json.dump(result, f, indent=2)
         
-        print(f"\n✅ Results saved to {args.output}")
+        print(f"\n[OK] Results saved to {args.output}")
     
     elif args.mode == 'batch':
-        print(f"⚡ Batch processing {args.batch_size} vendors...")
+        print(f"[*] Batch processing {args.batch_size} vendors...")
         df = load_and_preprocess_data()
         
         vendors = df.head(args.batch_size)
@@ -83,13 +92,13 @@ def main():
         with open(args.output, 'w') as f:
             json.dump(summary, f, indent=2)
         
-        print(f"\n✅ Processed {len(results)} vendors")
+        print(f"\n[OK] Processed {len(results)} vendors")
         print(f"📊 Tier Accuracy: {tier_accuracy:.2f}%")
         print(f"📊 Avg Score Error: {avg_score_error:.2f}")
         print(f"💾 Results saved to {args.output}")
     
     elif args.mode == 'benchmark':
-        print("🎯 Running benchmark evaluation...")
+        print("[*] Running benchmark evaluation...")
         evaluator = BenchmarkEvaluator()
         
         if args.technique == 'all':
@@ -106,9 +115,9 @@ def main():
         print("="*60)
         
         comparison_df.to_csv(args.output.replace('.json', '.csv'), index=False)
-        print(f"\n✅ Results saved to {args.output.replace('.json', '.csv')}")
+        print(f"\n[OK] Results saved to {args.output.replace('.json', '.csv')}")
     
-    print(f"\n📈 Total LLM calls: {agent.get_stats()['total_llm_calls']}")
+    print(f"\n[*] Total LLM calls: {agent.get_stats()['total_llm_calls']}")
 
 def run_analysis(agent, vendor_data, technique):
     """Run analysis with specified technique"""

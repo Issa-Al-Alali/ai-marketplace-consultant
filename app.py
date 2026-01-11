@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from data_engine import load_and_preprocess_data, get_vendor_summary
 from agent import MarketplaceAgent
 from benchmark import BenchmarkDataset, BenchmarkEvaluator
-from config import GOOGLE_API_KEY
+from config import GROQ_API_KEY
 import json
 
 st.set_page_config(
@@ -34,7 +34,7 @@ def get_data():
 
 @st.cache_resource
 def get_agent():
-    return MarketplaceAgent(GOOGLE_API_KEY)
+    return MarketplaceAgent(GROQ_API_KEY)
 
 # Load data
 try:
@@ -343,4 +343,4 @@ else:  # Batch Processing
 
 st.divider()
 st.caption("💡 For large-scale processing, use `python main_cli.py`")
-st.caption("⚙️ Powered by Google Gemini 2.5 Flash | Data: Olist Brazilian E-commerce")
+st.caption("⚙️ Powered by Groq LLama 3.3 70B | Data: Olist Brazilian E-commerce")

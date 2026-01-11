@@ -181,30 +181,56 @@ class BenchmarkEvaluator:
         self.results = []
     
     def evaluate_prediction(self, predicted, ground_truth):
+        # Handle error cases
+        if not isinstance(predicted, dict):
+            predicted = {}
+        if predicted.get('error') or predicted.get('parse_error'):
+            # Return worst-case metrics for errors
+            return {
+                'tier_correct': False,
+                'score_error': 100,  # Max error
+                'score_within_10': False,
+                'score_within_5': False,
+                'recommendation_overlap_score': 0
+            }
+        
+        # Get score (try multiple field names)
+        pred_score = predicted.get('overall_score') or predicted.get('score') or 50
+        true_score = ground_truth.get('overall_score', 50)
+        
+        # Get tier
+        pred_tier = predicted.get('tier')
+        true_tier = ground_truth.get('tier')
+        
         metrics = {
-            'tier_correct': predicted.get('tier') == ground_truth.get('tier'),
-            'score_error': abs(predicted.get('overall_score', predicted.get('score', 50)) - ground_truth['overall_score']),
-            'score_within_10': abs(predicted.get('overall_score', predicted.get('score', 50)) - ground_truth['overall_score']) <= 10,
-            'score_within_5': abs(predicted.get('overall_score', predicted.get('score', 50)) - ground_truth['overall_score']) <= 5
+            'tier_correct': pred_tier == true_tier if pred_tier else False,
+            'score_error': abs(pred_score - true_score),
+            'score_within_10': abs(pred_score - true_score) <= 10,
+            'score_within_5': abs(pred_score - true_score) <= 5
         }
         
         pred_recs = predicted.get('recommendations', [])
-        true_recs = ground_truth['key_recommendations']
+        true_recs = ground_truth.get('key_recommendations', [])
         
-        if isinstance(pred_recs, list):
+        if isinstance(pred_recs, list) and len(pred_recs) > 0 and len(true_recs) > 0:
             pred_actions = set()
             for rec in pred_recs:
                 if isinstance(rec, dict):
-                    pred_actions.add(rec.get('action', '').lower())
+                    action = rec.get('action', '')
+                    if action:
+                        pred_actions.add(action.lower())
                 else:
                     pred_actions.add(str(rec).lower())
             
             true_keywords = set()
             for rec in true_recs:
-                true_keywords.update(rec.lower().split())
+                if isinstance(rec, str):
+                    true_keywords.update(rec.lower().split())
             
             matches = sum(1 for action in pred_actions if any(kw in action for kw in true_keywords))
             metrics['recommendation_overlap_score'] = matches / len(true_recs) if true_recs else 0
+        else:
+            metrics['recommendation_overlap_score'] = 0
         
         return metrics
     

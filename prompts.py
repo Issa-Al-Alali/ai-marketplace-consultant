@@ -1,6 +1,16 @@
 SYSTEM_PROMPT = """You are an expert AI Marketplace Growth Consultant specializing in e-commerce vendor performance analysis.
 Your role is to analyze vendor metrics from the Olist Brazilian marketplace and provide actionable, strategic recommendations.
-You excel at identifying growth opportunities, operational inefficiencies, and competitive advantages."""
+You excel at identifying growth opportunities, operational inefficiencies, and competitive advantages.
+
+TIER CALIBRATION (CRITICAL - You MUST follow these thresholds):
+- Tier A: overall_score 70-100 (Top performers, excellent across all metrics)
+- Tier B: overall_score 40-70 (Solid performers, room for improvement)
+- Tier C: overall_score 0-40 (Struggling, needs significant intervention)
+
+The tier MUST match the overall_score. If you assign score 55, tier MUST be B.
+
+CRITICAL: Always output your analysis as valid JSON only, matching the required structure exactly.
+Do not include any explanatory text before or after the JSON."""
 
 # ============================================================================
 # Technique 1: Chain-of-Thought (CoT) Prompting
@@ -33,6 +43,7 @@ ANALYSIS FRAMEWORK - Think step-by-step:
    - Recommend strategic improvements
 
 OUTPUT FORMAT (JSON):
+IMPORTANT: Tier MUST match score thresholds: A=70-100, B=40-70, C=0-40
 {{
   "tier": "A/B/C",
   "overall_score": 0-100,
@@ -50,7 +61,12 @@ OUTPUT FORMAT (JSON):
 # ============================================================================
 FEW_SHOT_COT_PROMPT = """You are analyzing a marketplace vendor. Here are examples of high-quality analysis:
 
-EXAMPLE 1 - High Performer:
+TIER SCORING RULES (CRITICAL):
+- Tier A: score 70-100 (Top performers)
+- Tier B: score 40-70 (Solid performers)
+- Tier C: score 0-40 (Struggling vendors)
+
+EXAMPLE 1 - High Performer (Tier A):
 Vendor: seller_xyz
 Metrics: {{revenue: 50000, orders: 200, avg_review: 4.8, delivery_delay: -2 days}}
 
@@ -58,9 +74,20 @@ Analysis:
 Step 1: Financial - Strong revenue ($50K), excellent AOV ($250)
 Step 2: Performance - Outstanding reviews (4.8/5), early deliveries indicate operational excellence
 Step 3: Position - Likely premium product category, high customer trust
-Output: {{"tier": "A", "score": 92, "recommendation": "Scale marketing budget, expand product line"}}
+Output: {{
+  "tier": "A",
+  "overall_score": 85,
+  "strengths": ["Strong revenue", "Excellent reviews", "Early deliveries"],
+  "weaknesses": ["Could diversify catalog"],
+  "recommendations": [
+    {{"action": "Scale marketing budget", "priority": "high", "expected_impact": "Increase visibility"}},
+    {{"action": "Expand product line", "priority": "medium", "expected_impact": "Increase revenue streams"}}
+  ],
+  "risk_factors": ["Market competition"],
+  "growth_score": 80
+}}
 
-EXAMPLE 2 - Struggling Vendor:
+EXAMPLE 2 - Struggling Vendor (Tier C):
 Vendor: seller_abc
 Metrics: {{revenue: 5000, orders: 100, avg_review: 3.2, delivery_delay: 7 days}}
 
@@ -68,9 +95,20 @@ Analysis:
 Step 1: Financial - Low revenue despite decent volume, suggests low-margin products
 Step 2: Performance - Poor reviews (3.2/5) and late deliveries are red flags
 Step 3: Position - Operational issues damaging reputation
-Output: {{"tier": "C", "score": 45, "recommendation": "Urgent: Fix delivery process, improve product quality"}}
+Output: {{
+  "tier": "C",
+  "overall_score": 35,
+  "strengths": ["Some sales volume"],
+  "weaknesses": ["Poor reviews", "Late deliveries", "Low revenue"],
+  "recommendations": [
+    {{"action": "Fix delivery process", "priority": "high", "expected_impact": "Improve customer satisfaction"}},
+    {{"action": "Improve product quality", "priority": "high", "expected_impact": "Increase review scores"}}
+  ],
+  "risk_factors": ["Customer churn", "Reputation damage"],
+  "growth_score": 25
+}}
 
-EXAMPLE 3 - Mid-tier with Potential:
+EXAMPLE 3 - Mid-tier with Potential (Tier B):
 Vendor: seller_def
 Metrics: {{revenue: 20000, orders: 80, avg_review: 4.3, delivery_delay: 1 day}}
 
@@ -78,14 +116,25 @@ Analysis:
 Step 1: Financial - Good revenue, high AOV ($250) suggests premium positioning
 Step 2: Performance - Solid reviews, minor delivery delays acceptable
 Step 3: Position - Strong foundation, ready for growth
-Output: {{"tier": "B", "score": 72, "recommendation": "Increase inventory, optimize delivery partner"}}
+Output: {{
+  "tier": "B",
+  "overall_score": 58,
+  "strengths": ["Good revenue", "Solid reviews", "Premium positioning"],
+  "weaknesses": ["Minor delivery delays", "Limited scale"],
+  "recommendations": [
+    {{"action": "Increase inventory", "priority": "medium", "expected_impact": "Support growth"}},
+    {{"action": "Optimize delivery partner", "priority": "medium", "expected_impact": "Improve delivery times"}}
+  ],
+  "risk_factors": ["Supply chain issues"],
+  "growth_score": 55
+}}
 
 ---
 
 NOW ANALYZE THIS VENDOR:
 {metrics}
 
-Follow the same step-by-step reasoning pattern and provide structured JSON output."""
+Follow the same step-by-step reasoning pattern. ENSURE the tier matches the score thresholds (A=70-100, B=40-70, C=0-40)."""
 
 # ============================================================================
 # Technique 3: Evaluator-Optimizer (Two-Stage Refinement)
@@ -139,7 +188,21 @@ Requirements:
 - Adjust tier/score if critique justified it
 - Maintain objectivity and data-driven conclusions
 
-Output the final refined analysis in JSON format matching the original structure."""
+CRITICAL: Output ONLY valid JSON in this exact structure:
+TIER MUST MATCH SCORE: A=70-100, B=40-70, C=0-40
+{{
+  "tier": "A/B/C",
+  "overall_score": 0-100,
+  "strengths": ["strength1", "strength2"],
+  "weaknesses": ["weakness1", "weakness2"],
+  "recommendations": [
+    {{"action": "specific action", "priority": "high/medium/low", "expected_impact": "description"}}
+  ],
+  "risk_factors": ["risk1", "risk2"],
+  "growth_score": 0-100
+}}
+
+Do not include any text before or after the JSON."""
 
 # ============================================================================
 # Technique 4: Parallel Voting (Ensemble Decision Making)
